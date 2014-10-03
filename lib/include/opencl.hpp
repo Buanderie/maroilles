@@ -3,6 +3,7 @@
 
 // STL
 #include <vector>
+#include <string>
 
 // OPENCL
 #include <CL/cl.h>
@@ -11,12 +12,16 @@ namespace mrl
 {
     namespace opencl
     {
+        class Kernel;
         class Device
         {
         public:
             Device(cl_platform_id platformId, cl_device_id deviceId);
             virtual ~Device();
             cl_device_type getType(){ return _deviceType; }
+            cl_context getContext(){ return _context; }
+            cl_device_id getId(){ return _deviceId; }
+            void enqueueKernel( Kernel* kernel );
 
         private:
             cl_platform_id _platformId;
@@ -43,6 +48,43 @@ namespace mrl
             void init();
             void destroy();
 
+        };
+
+        class Program
+        {
+        public:
+            Program(Device *device, const std::string& programSourcePath );
+            virtual ~Program();
+
+            Kernel* getKernel( const std::string& kernelName );
+
+        private:
+            Device* _device;
+            std::string _programSourcePath;
+            char* _sourceStr;
+            size_t _sourceSize;
+
+            cl_program _program;
+
+            void init();
+            void destroy();
+            void printCompilerError();
+        };
+
+        class Kernel
+        {
+        public:
+            Kernel( const cl_kernel& kernelId );
+            virtual ~Kernel();
+            cl_kernel getId(){ return _kernelId; }
+            template< class T > void setArgument( const T& argValue ){ clSetKernelArg( _kernelId, _argCount++, sizeof(T), &argValue); }
+
+        private:
+            cl_kernel _kernelId;
+            unsigned int _argCount;
+
+            void init();
+            void destroy();
         };
 
         class OpenCL
