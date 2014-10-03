@@ -12,6 +12,18 @@ namespace mrl
 {
     namespace opencl
     {
+        class MemoryBuffer
+        {
+        public:
+            MemoryBuffer( const size_t bufferSize ){}
+            virtual ~MemoryBuffer(){}
+
+            virtual void * getBufferPtr()=0;
+            virtual size_t getBufferSize()=0;
+        };
+
+        class HostBuffer;
+        class DeviceBuffer;
         class Kernel;
         class Device
         {
@@ -22,6 +34,10 @@ namespace mrl
             cl_context getContext(){ return _context; }
             cl_device_id getId(){ return _deviceId; }
             void enqueueKernel( Kernel* kernel );
+            /* TODO */
+            void enqueueHostToDevice( );
+            void enqueueDeviceToHost( );
+
 
         private:
             cl_platform_id _platformId;
@@ -32,6 +48,29 @@ namespace mrl
 
             void init();
             void destroy();
+        };
+
+        class HostBuffer : public MemoryBuffer
+        {
+        public:
+            HostBuffer( const size_t bufferSize )
+            {
+
+            }
+
+            virtual ~HostBuffer()
+            {
+
+            }
+
+        private:
+        };
+
+        class DeviceBuffer : public MemoryBuffer
+        {
+        public:
+
+        private:
         };
 
         class Platform
