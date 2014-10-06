@@ -1,6 +1,9 @@
 #ifndef __OPENCL_HPP__
 #define __OPENCL_HPP__
 
+// C
+#include <cstdlib>
+
 // STL
 #include <vector>
 #include <string>
@@ -15,7 +18,7 @@ namespace mrl
         class MemoryBuffer
         {
         public:
-            MemoryBuffer( const size_t bufferSize ){}
+            MemoryBuffer(){}
             virtual ~MemoryBuffer(){}
 
             virtual void * getBufferPtr()=0;
@@ -35,8 +38,8 @@ namespace mrl
             cl_device_id getId(){ return _deviceId; }
             void enqueueKernel( Kernel* kernel );
             /* TODO */
-            void enqueueHostToDevice( );
-            void enqueueDeviceToHost( );
+            void enqueueHostToDevice( HostBuffer* host, DeviceBuffer* device );
+            void enqueueDeviceToHost( DeviceBuffer* device, HostBuffer* host );
 
 
         private:
@@ -54,23 +57,71 @@ namespace mrl
         {
         public:
             HostBuffer( const size_t bufferSize )
+                :_bufferSize( bufferSize ), _hostBuffer(0)
             {
-
+                init();
             }
 
             virtual ~HostBuffer()
             {
+                destroy();
+            }
 
+            virtual void * getBufferPtr()
+            {
+                return _hostBuffer;
+            }
+
+            virtual size_t getBufferSize()
+            {
+                return _bufferSize;
             }
 
         private:
+            void*   _hostBuffer;
+            size_t  _bufferSize;
+
+            void init(){ _hostBuffer = malloc( _bufferSize ); }
+            void destroy(){ if( _hostBuffer ){ free( _hostBuffer ); } }
         };
 
         class DeviceBuffer : public MemoryBuffer
         {
         public:
+            DeviceBuffer( Device* device, const size_t bufferSize )
+                :_bufferSize( bufferSize ), _deviceBuffer(0), _device( device )
+            {
+                init();
+            }
+
+            virtual ~DeviceBuffer()
+            {
+                destroy();
+            }
+
+            virtual void * getBufferPtr()
+            {
+                return (void*)(_deviceBuffer);
+            }
+
+            virtual size_t getBufferSize()
+            {
+                return _bufferSize;
+            }
 
         private:
+            cl_mem  _deviceBuffer;
+            size_t  _bufferSize;
+            Device* _device;
+
+            void init(){
+                cl_int ret;
+                _deviceBuffer = clCreateBuffer( _device->getContext(), CL_MEM_READ_WRITE, _bufferSize, 0, &ret);
+            }
+
+            void destroy(){
+                clReleaseMemObject( _deviceBuffer );
+            }
         };
 
         class Platform

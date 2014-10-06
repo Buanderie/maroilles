@@ -116,54 +116,42 @@ void mrl::opencl::Device::enqueueKernel(mrl::opencl::Kernel *kernel)
     cl_event event;
 
     ////////////////////////////////////////
-    // OpenCL buffers
+    // OpenCL enqueue kernel and wait
 
-    // N x 1 row major array buffers
-    size_t N = 200000;
-    float cpuX[N], cpuY[N];
+    // N work-items in groups of 4
+    const size_t groupsize = 16;
+    const size_t global[] = { 10000000 }, local[] = { groupsize };
 
-    // initialize array data
-    for (size_t i = 0; i < N; i++)
+    //for(;;)
     {
-        cpuX[i] = i;
-        cpuY[i] = 1;
-    }
+    // enqueue kernel
+    ret = clEnqueueNDRangeKernel(   _queue,
+                                    kernel->getId(),
+                                    sizeof(global)/sizeof(size_t),
+                                    NULL,
+                                    global,
+                                    local,
+                                    0,
+                                    NULL,
+                                    &event);
+    //cout << "ret=" << ret << endl;
+    exitOnFail(ret, "enqueue kernel");
 
-    // second argument: memory buffer object for X
-    cl_mem memX = clCreateBuffer(_context,
-                                 CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                                 N * sizeof(float),
-                                 cpuX,
-                                 &ret);
-    exitOnFail(ret, "create buffer for X");
-
-    // third argument: memory buffer object for Y
-    cl_mem memY = clCreateBuffer(_context,
-                                 CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR,
-                                 N * sizeof(float),
-                                 cpuY,
-                                 &ret);
-    exitOnFail(ret, "create buffer for Y");
-
-    ////////////////////////////////////////
-    // OpenCL move buffer data to device
-
-    // data transfer for array X
-    ret = clEnqueueWriteBuffer(_queue,
-                                  memX,
-                                  CL_FALSE,
-                                  0,
-                                  N * sizeof(float),
-                                  cpuX,
-                                  0,
-                                  NULL,
-                                  &event);
-    exitOnFail(ret, "write X to device");
+    // wait for kernel, this forces execution
     ret = clWaitForEvents(1, &event);
-    exitOnFail(ret, "wait for write X to device");
-    clReleaseEvent(event);
 
+    exitOnFail(ret, "wait for enqueue kernel");
+    clReleaseEvent(event);
+    }
+}
+
+void mrl::opencl::Device::enqueueHostToDevice(mrl::opencl::HostBuffer *host, mrl::opencl::DeviceBuffer *device)
+{
+    // wait event synchronization handle used by OpenCL API
+    cl_event event;
+    cl_int ret;
     // data transfer for array Y
+    /*
     ret = clEnqueueWriteBuffer(_queue,
                                   memY,
                                   CL_FALSE,
@@ -173,63 +161,42 @@ void mrl::opencl::Device::enqueueKernel(mrl::opencl::Kernel *kernel)
                                   0,
                                   NULL,
                                   &event);
-    exitOnFail(ret, "write Y to device");
-    ret = clWaitForEvents(1, &event);
-    exitOnFail(ret, "wait for write Y to device");
-    clReleaseEvent(event);
-
-    // first argument: a scalar float
-    float alpha = 1.5f;
-
-    // set first argument
-    //ret = clSetKernelArg(kernel->getId(), 0, sizeof(float), &alpha);
-    //exitOnFail(ret, "set kernel argument alpha");
-    kernel->setArgument< float >( alpha );
-    kernel->setArgument< cl_mem >( memX );
-    kernel->setArgument< cl_mem >( memY );
-
-    /*
-    // set second argument
-    ret = clSetKernelArg(kernel->getId(), 1, sizeof(cl_mem), &memX);
-    exitOnFail(ret, "set kernel argument X");
-
-    // set third argument
-    ret = clSetKernelArg(kernel->getId(), 2, sizeof(cl_mem), &memY);
-    exitOnFail(ret, "set kernel argument Y");
     */
+    ret = clEnqueueWriteBuffer(   _queue,
+                                  (cl_mem)device->getBufferPtr(),
+                                  CL_FALSE,
+                                  0,
+                                  host->getBufferSize(),
+                                  host->getBufferPtr(),
+                                  0,
+                                  NULL,
+                                  &event);
 
-    ////////////////////////////////////////
-    // OpenCL enqueue kernel and wait
+    exitOnFail(ret, "write Y to device");
 
-    // N work-items in groups of 4
-    const size_t groupsize = 64;
-    const size_t global[] = { N }, local[] = { groupsize };
-
-    //for(;;)
-    {
-    // enqueue kernel
-    ret = clEnqueueNDRangeKernel(_queue,
-                                    kernel->getId(),
-                                    sizeof(global)/sizeof(size_t),
-                                    NULL,
-                                    global,
-                                    local,
-                                    0,
-                                    NULL,
-                                    &event);
-        cout << "ret=" << ret << endl;
-    exitOnFail(ret, "enqueue kernel");
-
-    // wait for kernel, this forces execution
     ret = clWaitForEvents(1, &event);
 
-    exitOnFail(ret, "wait for enqueue kernel");
-    clReleaseEvent(event);
-    }
+    exitOnFail(ret, "wait for write Y to device");
 
-    /* Execute kernel */
-    //ret = clEnqueueTask( _queue, kernel->getId(), 0, NULL, NULL);
-    //exitOnFail(ret, "Create popo");
+    clReleaseEvent(event);
+}
+
+void mrl::opencl::Device::enqueueDeviceToHost(mrl::opencl::DeviceBuffer *device, mrl::opencl::HostBuffer *host)
+{
+    cl_event event;
+    cl_int ret;
+    ret = clEnqueueReadBuffer(   _queue,
+                                 (cl_mem)device->getBufferPtr(),
+                                 CL_FALSE,
+                                 0,
+                                 host->getBufferSize(),
+                                 host->getBufferPtr(),
+                                 0,
+                                 NULL,
+                                 &event);
+    exitOnFail(ret, "read Y to device");
+    ret = clWaitForEvents(1, &event);
+    clReleaseEvent(event);
 }
 
 void mrl::opencl::Device::init()
