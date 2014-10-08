@@ -22,6 +22,9 @@ int main( int argc, char** argv )
                 Kernel* ker = prg->getKernel( "saxpy" );
                 Device* dev = devices[i];
 
+                Scan* scan = new Scan( dev, 15000, "/home/said/Scan_b.cl" );
+                cout << "lolol " << endl;
+
                 const int N = 10000000;
                 HostBuffer * h0 = new HostBuffer( N * sizeof(float) );
                 float* hostPtr = (float*)h0->getBufferPtr();
@@ -41,7 +44,7 @@ int main( int argc, char** argv )
                 ker->setArgument< cl_mem >( (cl_mem)d0->getBufferPtr() );
                 ker->setArgument< cl_mem >( (cl_mem)d1->getBufferPtr() );
 
-                dev->enqueueKernel( ker );
+                dev->enqueueKernel( ker, 128, N );
 
                 dev->enqueueDeviceToHost( d1, h0 );
                 }

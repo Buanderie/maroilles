@@ -48,7 +48,11 @@ endif( OPENCL_FOUND )
 include_directories( ${LIBMAROILLES_SOURCE_DIR}/include )
 
 file ( GLOB_RECURSE MAROILLES_CPP ./src/*.cpp )
+file ( GLOB_RECURSE MAROILLES_OPENCL_CPP ./src/opencl/*.cpp )
+
 set( ALL_CPP ${MAROILLES_CPP} )
+set( ALL_CPP "${ALL_CPP};${MAROILLES_OPENCL_CPP}" )
+
 if( ${MAROILLES_CURRENT_SYSTEM} STREQUAL "WINDOWS" )
   add_library( maroilles ${ALL_CPP} )
 else()
