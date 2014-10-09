@@ -4,6 +4,8 @@
 // OPENCL
 #include "opencl/opencl.hpp"
 #include "opencl/scan.hpp"
+#include "opencl/saxpy.hpp"
+
 
 void foo();
 
