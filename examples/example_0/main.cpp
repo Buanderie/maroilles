@@ -22,7 +22,9 @@ int main( int argc, char** argv )
                 Kernel* ker = prg->getKernel( "saxpy" );
                 Device* dev = devices[i];
 
-                Scan* scan = new Scan( dev, 15000, "/home/said/Scan_b.cl" );
+                //Scan* scan = new Scan( dev, 15000, "/home/said/Scan_b.cl" );
+                //cout << "lolol " << endl;
+                RadixSort* rsort = new RadixSort( dev, 50000 );
                 cout << "lolol " << endl;
 
                 const int N = 10000000;
@@ -38,20 +40,18 @@ int main( int argc, char** argv )
 
                 for(;;)
                 {
-                dev->enqueueHostToDevice( h0, d0 );
-
-                ker->setArgument< float >( 1.0f );
-                ker->setArgument< cl_mem >( (cl_mem)d0->getBufferPtr() );
-                ker->setArgument< cl_mem >( (cl_mem)d1->getBufferPtr() );
-
-                dev->enqueueKernel( ker, 128, N );
-
-                dev->enqueueDeviceToHost( d1, h0 );
+                    dev->enqueueHostToDevice( h0, d0 );
+                    ker->setArgument< float >( 1.0f );
+                    ker->setArgument< cl_mem >( (cl_mem)d0->getBufferPtr() );
+                    ker->setArgument< cl_mem >( (cl_mem)d1->getBufferPtr() );
+                    dev->enqueueKernel( ker, 128, N );
+                    dev->enqueueDeviceToHost( d1, h0 );
+                    ker->clearArguments();
                 }
-/*
+                /*
                 for( int j = 0; j < N; ++j )
                     cout << "h0[" << j << "]=" << hostPtr[j] << endl;
-                    */
+                */
             }
         }
     }
