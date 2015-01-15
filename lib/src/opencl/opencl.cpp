@@ -38,7 +38,7 @@ void mrl::opencl::OpenCL::init()
     cl_int status = clGetPlatformIDs(0, NULL, &numPlatforms);
 
     // get platform IDs
-    cl_platform_id platformIDs[numPlatforms];
+    cl_platform_id * platformIDs = new cl_platform_id[numPlatforms];
     status = clGetPlatformIDs(numPlatforms, platformIDs, NULL);
 
     for (size_t i = 0; i < numPlatforms; i++)
@@ -76,7 +76,7 @@ void mrl::opencl::Platform::init()
                             &numDevices);
 
     // get device IDs for a platform
-    cl_device_id deviceIDs[numDevices];
+    cl_device_id * deviceIDs = new cl_device_id[numDevices];
     status = clGetDeviceIDs(_platformId,
                             CL_DEVICE_TYPE_ALL,
                             numDevices,

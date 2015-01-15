@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 
 project (Maroilles)
 
-option(BUILD_TESTS "build unit tests" ON)
+option(BUILD_TESTS "build unit tests" OFF)
 option(BUILD_EXAMPLES "build example applications" OFF)
 
 # Handle platform specifics
